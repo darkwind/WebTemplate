@@ -8,6 +8,7 @@ from tornado import netutil, process
 from tornado.web import RedirectHandler
 from tornado.options import options, parse_command_line
 from tornado.httpserver import HTTPServer
+from tornado_sqlalchemy import SQLAlchemy
 
 import tornado_swirl as swirl
 import logging
@@ -48,8 +49,15 @@ def make_app():
     routes = swirl.api_routes() + [
         (r"/(.*)", RedirectHandler, {'url': '/api'}),
     ]
-    return swirl.Application(routes, **settings)
+    return swirl.Application(
+        routes,
+        db=SQLAlchemy(f"{config.db_type}://{config.db_user}:{config.db_pass}@{config.db_host}/{config.db_name}"),
+        **settings)
 
+from sqlalchemy import create_engine
+engine = create_engine(f"{config.db_type}://{config.db_user}:{config.db_pass}@{config.db_host}/{config.db_name}", echo=True)
+
+print(engine.execute("select 1").scalar())
 
 if __name__ == "__main__":
     if sys.platform == 'win32':
